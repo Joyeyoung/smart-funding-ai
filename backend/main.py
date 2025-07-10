@@ -29,7 +29,6 @@ def preprocess_image(image_bytes):
     arr = tf.keras.applications.mobilenet_v2.preprocess_input(arr)
     return np.expand_dims(arr, axis=0)
 
-# 라벨별 한글 설명 및 한글명 매핑
 LABEL_INFO = {
     "coffee_mug": {
         "feature": "머그컵으로 일상에서 자주 사용하는 리빙 소품입니다.",
@@ -51,7 +50,6 @@ LABEL_INFO = {
         "feature": "수영할 때 입는 남성용 수영복입니다.",
         "ko_name": "수영복(남성용)"
     }
-    # 필요시 라벨 추가
 }
 
 def label_to_korean(label):
@@ -126,42 +124,27 @@ async def recommend_platform(image: UploadFile = File(...)):
     }
 
     if "mug" in label or "cup" in label:
-        result = {
-            "platform": "와디즈",
-            "category": "리빙 소품",
-            "reason": "머그컵 등 리빙 제품은 국내 플랫폼에 적합합니다.",
-            "feature": info["feature"],
-            "label_ko": label_ko,
-            "design": design_info,
-            "suitability": suitability
-        }
+        platform = "와디즈"
+        category = "리빙 소품"
+        reason = "머그컵 등 리빙 제품은 국내 플랫폼에 적합합니다."
     elif "laptop" in label or "cellular" in label:
-        result = {
-            "platform": "킥스타터",
-            "category": "테크/디자인",
-            "reason": "테크 제품은 글로벌 시장에 적합합니다.",
-            "feature": info["feature"],
-            "label_ko": label_ko,
-            "design": design_info,
-            "suitability": suitability
-        }
+        platform = "킥스타터"
+        category = "테크/디자인"
+        reason = "테크 제품은 글로벌 시장에 적합합니다."
     else:
-        result = {
-            "platform": "젝젝",
-            "category": "라이프스타일",
-            "reason": f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다.",
-            "feature": info["feature"],
-            "label_ko": label_ko,
-            "design": design_info,
-            "suitability": suitability
-        }
-    return result
+        platform = "젝젝"
+        category = "라이프스타일"
+        reason = f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다."
+
+    return {
+        "platform": platform,
+        "category": category,
+        "reason": reason,
+        "feature": info["feature"],
+        "label_ko": label_ko,
+        "design": design_info,
+        "suitability": suitability
+    }
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-        }
-    return result
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
