@@ -43,74 +43,54 @@
     <div id="gaugeContainer" style="margin-top:1rem;"></div>
   </div>
 
-  <script>
-    const form = document.getElementById('uploadForm');
-    const fileInput = form.querySelector('input[type="file"]');
-    const previewImg = document.getElementById('preview');
+  <!-- HTML의 fetch URL을 Cloud Run 주소로 변경 -->
+<script>
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
 
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-          previewImg.src = ev.target.result;
-          previewImg.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      } else {
-        previewImg.style.display = 'none';
-        previewImg.src = '';
-      }
-    });
+    try {
+      const res = await fetch('https://funding-ai-server-249358709999.asia-northeast3.run.app/api/recommend-platform', {
+        method: 'POST',
+        body: formData
+      });
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('platformName').textContent = data.platform;
+        document.getElementById('categoryName').textContent = data.category;
+        document.getElementById('reasonText').textContent = data.reason;
+        document.getElementById('labelKoText').textContent = data.label_ko || '';
+        document.getElementById('featureText').textContent = data.feature || '';
+        const design = data.design || {};
+        let designText = '';
+        if (design.main_color) designText += `색상: ${design.main_color} `;
+        if (design.material) designText += `재질: ${design.material}`;
+        document.getElementById('designText').textContent = designText.trim();
 
-      try {
-        const res = await fetch('https://funding-ai-server-2493587099999.asia-northeast3.run.app/api/recommend-platform', {
-          method: 'POST',
-          body: formData
+        const suitability = data.suitability || {};
+        const gaugeContainer = document.getElementById('gaugeContainer');
+        gaugeContainer.innerHTML = '';
+        Object.entries(suitability).forEach(([site, percent]) => {
+          const bar = document.createElement('div');
+          bar.style.margin = '0.5rem 0';
+          bar.innerHTML = `<strong>${site}</strong> <div style="background:#eee;width:100%;height:18px;position:relative;">
+            <div style="background:#4caf50;width:${percent}%;height:100%;"></div>
+            <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:13px;">${percent}%</span>
+          </div>`;
+          gaugeContainer.appendChild(bar);
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          document.getElementById('platformName').textContent = data.platform;
-          document.getElementById('categoryName').textContent = data.category;
-          document.getElementById('reasonText').textContent = data.reason;
-          document.getElementById('labelKoText').textContent = data.label_ko || '';
-          document.getElementById('featureText').textContent = data.feature || '';
-          // 디자인 분석
-          const design = data.design || {};
-          let designText = '';
-          if (design.main_color) designText += `색상: ${design.main_color} `;
-          if (design.material) designText += `재질: ${design.material}`;
-          document.getElementById('designText').textContent = designText.trim();
-
-          // 적합도 게이지
-          const suitability = data.suitability || {};
-          const gaugeContainer = document.getElementById('gaugeContainer');
-          gaugeContainer.innerHTML = '';
-          Object.entries(suitability).forEach(([site, percent]) => {
-            const bar = document.createElement('div');
-            bar.style.margin = '0.5rem 0';
-            bar.innerHTML = `<strong>${site}</strong> <div style="background:#eee;width:100%;height:18px;position:relative;">
-              <div style="background:#4caf50;width:${percent}%;height:100%;"></div>
-              <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:13px;">${percent}%</span>
-            </div>`;
-            gaugeContainer.appendChild(bar);
-          });
-
-          document.getElementById('result').style.display = 'block';
-        } else {
-          alert('분석에 실패했습니다.');
-          console.error('서버 응답 오류:', res.status, await res.text());
-        }
-      } catch (err) {
-        alert('서버에 연결할 수 없습니다.');
-        console.error('Fetch 에러:', err);
+        document.getElementById('result').style.display = 'block';
+      } else {
+        alert('분석에 실패했습니다.');
+        console.error('서버 응답 오류:', res.status, await res.text());
       }
-    });
-  </script>
+    } catch (err) {
+      alert('서버에 연결할 수 없습니다.');
+      console.error('Fetch 에러:', err);
+    }
+  });
+</script>
 </body>
 </html>
