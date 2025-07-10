@@ -9,12 +9,13 @@ import io
 
 app = FastAPI()
 
-# ✅ CORS 설정 (Vercel 도메인으로 수정)
+# ✅ CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://smart-funding-ai.vercel.app",
-        "https://smart-funding-a11tg02j1-joyeyoungs-projects.vercel.app"
+        "https://smart-funding-a11tg02j1-joyeyoungs-projects.vercel.app",
+        "https://funding-ai-server-249358709999.asia-northeast3.run.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -32,7 +33,6 @@ def preprocess_image(image_bytes):
     arr = tf.keras.applications.mobilenet_v2.preprocess_input(arr)
     return np.expand_dims(arr, axis=0)
 
-# ✅ 한글 라벨 정보
 LABEL_INFO = {
     "coffee_mug": {"feature": "머그컵으로 일상에서 자주 사용하는 리빙 소품입니다.", "ko_name": "머그컵"},
     "cup": {"feature": "컵으로 다양한 음료를 담을 수 있는 실용적인 제품입니다.", "ko_name": "컵"},
@@ -109,6 +109,5 @@ async def recommend_platform(image: UploadFile = File(...)):
         "suitability": suitability
     }
 
-# ✅ Cloud Run에서는 반드시 port=8080 으로 설정
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8080)
