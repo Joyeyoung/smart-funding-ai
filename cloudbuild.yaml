@@ -1,0 +1,7 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/maximal-chariot-465504-i9/my-image', '.']
+
+logsBucket: 'gs://my-build-logs-bucket-maximal-chariot' # 생성한 버킷 이름으로 변경
+options:
+  logging: GCS_ONLY # 로그를 이 버킷에만 저장하도록 명시
