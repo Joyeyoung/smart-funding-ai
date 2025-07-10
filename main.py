@@ -51,7 +51,7 @@ LABEL_INFO = {
         "feature": "수영할 때 입는 남성용 수영복입니다.",
         "ko_name": "수영복(남성용)"
     }
-    # 필요시 라벨 추가
+    # 필요시 라벨 추가 가능
 }
 
 def label_to_korean(label):
@@ -155,15 +155,9 @@ async def recommend_platform(image: UploadFile = File(...)):
             "design": design_info,
             "suitability": suitability
         }
+
     return result
 
+# ✅ Cloud Run은 반드시 8080 포트에서 실행되어야 합니다.
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-        }
-    return result
-
-# ... 위에는 FastAPI, 모델, 라우터 정의 등 그대로 유지 ...
-
-if __name__ == "__main__":
-    import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080)
