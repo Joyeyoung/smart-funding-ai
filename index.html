@@ -68,7 +68,7 @@
       const formData = new FormData(form);
 
       try {
-        const res = await fetch('https://funding-ai-server-249358709999.asia-northeast3.run.app/api/recommend-platform', {
+        const res = await fetch('http://localhost:8000/api/recommend-platform', {
           method: 'POST',
           body: formData
         });
@@ -80,13 +80,14 @@
           document.getElementById('reasonText').textContent = data.reason;
           document.getElementById('labelKoText').textContent = data.label_ko || '';
           document.getElementById('featureText').textContent = data.feature || '';
-
+          // 디자인 분석
           const design = data.design || {};
           let designText = '';
           if (design.main_color) designText += `색상: ${design.main_color} `;
           if (design.material) designText += `재질: ${design.material}`;
           document.getElementById('designText').textContent = designText.trim();
 
+          // 적합도 게이지
           const suitability = data.suitability || {};
           const gaugeContainer = document.getElementById('gaugeContainer');
           gaugeContainer.innerHTML = '';
