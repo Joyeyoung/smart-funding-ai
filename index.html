@@ -4,24 +4,13 @@
   <meta charset="UTF-8" />
   <title>펀딩 플랫폼 추천</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 2rem;
-      padding: 2rem;
-      max-width: 600px;
-    }
-    #result {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      border: 1px solid #ddd;
-      background: #f9f9f9;
-      display: none;
-    }
+    body { font-family: sans-serif; margin: 2rem; padding: 2rem; max-width: 600px; }
+    #result { margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; background: #f9f9f9; display: none; }
   </style>
 </head>
 <body>
   <h2>제품 이미지를 업로드하면 추천 플랫폼을 알려드려요</h2>
-  <div style="background:#fffbe6; border:1px solid #ffe58f; padding:0.8rem 1rem; margin-bottom:1.2rem; color:#ad8b00;">
+  <div style="background:#fffbe6;border:1px solid #ffe58f;padding:0.8rem 1rem;margin-bottom:1.2rem;color:#ad8b00;">
     <strong>분석 정확도를 높이려면:</strong><br>
     제품을 <b>흰색 배경</b>에서 촬영한 이미지를 업로드해 주세요.<br>
     배경이 단순할수록 AI가 제품을 더 정확히 분석할 수 있어요.
@@ -31,7 +20,8 @@
     <input type="file" name="image" accept="image/*" required />
     <button type="submit">업로드 및 분석</button>
   </form>
-  <img id="preview" style="display:none; margin-top:1rem; max-width:100%; border:1px solid #ccc;" />
+
+  <img id="preview" style="display:none;margin-top:1rem;max-width:100%;border:1px solid #ccc;" />
 
   <div id="result">
     <h3>추천 플랫폼</h3>
@@ -45,16 +35,17 @@
   </div>
 
   <script>
+    const SERVICE_URL = 'https://your-cloud-run-url.run.app';  // ← 실제 배포 URL로 변경해주세요
+
     const form = document.getElementById('uploadForm');
-    const fileInput = form.querySelector('input[type="file"]');
+    const fileInput = form.querySelector('input[name="image"]');
     const previewImg = document.getElementById('preview');
 
-    // 이미지 미리보기
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(ev) {
+        reader.onload = ev => {
           previewImg.src = ev.target.result;
           previewImg.style.display = 'block';
         };
@@ -65,56 +56,51 @@
       }
     });
 
-    // 폼 제출 이벤트
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = new FormData(form);
+      const formData = new FormData();
+      formData.append('image', fileInput.files[0]);
 
       try {
-        const res = await fetch('https://smart-funding-ai-249358709999.asia-northeast3.run.app/api/recommend-platform', {
+        const res = await fetch(`${SERVICE_URL}/api/recommend-platform`, {
           method: 'POST',
           body: formData
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          document.getElementById('platformName').textContent = data.platform || '-';
-          document.getElementById('categoryName').textContent = data.category || '-';
-          document.getElementById('reasonText').textContent = data.reason || '-';
-          document.getElementById('labelKoText').textContent = data.label_ko || '-';
-          document.getElementById('featureText').textContent = data.feature || '-';
+        if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+        const data = await res.json();
 
-          // 디자인 분석
-          const design = data.design || {};
-          let designText = '';
-          if (design.main_color) designText += `색상: ${design.main_color} `;
-          if (design.material) designText += `재질: ${design.material}`;
-          document.getElementById('designText').textContent = designText.trim() || '-';
+        document.getElementById('platformName').textContent = data.platform || '-';
+        document.getElementById('categoryName').textContent = data.category || '-';
+        document.getElementById('reasonText').textContent = data.reason || '-';
+        document.getElementById('labelKoText').textContent = data.label_ko || '-';
+        document.getElementById('featureText').textContent = data.feature || '-';
 
-          // 적합도 게이지
-          const suitability = data.suitability || {};
-          const gaugeContainer = document.getElementById('gaugeContainer');
-          gaugeContainer.innerHTML = '';
-          Object.entries(suitability).forEach(([site, percent]) => {
-            const bar = document.createElement('div');
-            bar.style.margin = '0.5rem 0';
-            bar.innerHTML = `
-              <strong>${site}</strong>
-              <div style="background:#eee;width:100%;height:18px;position:relative;">
-                <div style="background:#4caf50;width:${percent}%;height:100%;"></div>
-                <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:13px;">${percent}%</span>
-              </div>`;
-            gaugeContainer.appendChild(bar);
-          });
+        const design = data.design || {};
+        const designText = [
+          design.main_color ? `색상: ${design.main_color}` : '',
+          design.material ? `재질: ${design.material}` : ''
+        ].filter(Boolean).join(' / ');
+        document.getElementById('designText').textContent = designText || '-';
 
-          document.getElementById('result').style.display = 'block';
-        } else {
-          alert('분석에 실패했습니다.');
-          console.error('서버 응답 오류:', res.status, await res.text());
-        }
+        const gaugeContainer = document.getElementById('gaugeContainer');
+        gaugeContainer.innerHTML = '';
+        Object.entries(data.suitability || {}).forEach(([site, pct]) => {
+          const bar = document.createElement('div');
+          bar.style.margin = '0.5rem 0';
+          bar.innerHTML = `
+            <strong>${site}</strong>
+            <div style="background:#eee;width:100%;height:18px;position:relative;">
+              <div style="background:#4caf50;width:${pct}%;height:100%;"></div>
+              <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:13px;">${pct}%</span>
+            </div>`;
+          gaugeContainer.appendChild(bar);
+        });
+
+        document.getElementById('result').style.display = 'block';
       } catch (err) {
-        alert('서버에 연결할 수 없습니다.');
-        console.error('Fetch 에러:', err);
+        alert(err.message);
+        console.error(err);
       }
     });
   </script>
