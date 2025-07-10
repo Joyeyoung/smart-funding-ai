@@ -12,7 +12,11 @@ app = FastAPI()
 # ✅ CORS 설정 (Vercel 도메인으로 수정)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://smart-funding-ai.vercel.app"],  # 실제 Vercel 배포 주소로 수정
+    allow_origins=[
+        "https://smart-funding-ai.vercel.app",
+        "https://smart-funding-ai-git-main-joyeyoungs-projects.vercel.app",
+        "https://smart-funding-d86jvv8j0-joyeyoungs-projects.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
