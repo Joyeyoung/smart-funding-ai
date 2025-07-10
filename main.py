@@ -158,6 +158,7 @@ async def recommend_platform(image: UploadFile = File(...)):
 
     return result
 
-# ✅ Cloud Run은 반드시 8080 포트에서 실행되어야 합니다.
+# 맨 마지막
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8080)
+
