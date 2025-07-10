@@ -68,7 +68,7 @@
       const formData = new FormData(form);
 
       try {
-        const res = await fetch('http://localhost:8000/api/recommend-platform', {
+        const res = await fetch('https://funding-ai-server-2493587099999.asia-northeast3.run.app/api/recommend-platform', {
           method: 'POST',
           body: formData
         });
