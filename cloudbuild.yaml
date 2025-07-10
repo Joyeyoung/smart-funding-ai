@@ -1,8 +1,0 @@
-steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/maximal-chariot-465504-i9/your-image-name', '.']
-# ... 다른 빌드 단계가 있다면 여기에 추가 ...
-
-options:
-  # 이 옵션을 추가하여 빌드 로그를 빌드가 실행되는 리전의 사용자 소유 버킷에 저장하도록 지정합니다.
-  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
