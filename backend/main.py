@@ -12,8 +12,8 @@ app = FastAPI()
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://smart-funding-a11tg02j1-joyeyoungs-projects.vercel.app"],
-    allow_credentials=False,
+    allow_origins=["https://smart-funding-ai.vercel.app"],  # 정확한 vercel 주소
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
