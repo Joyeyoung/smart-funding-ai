@@ -23,9 +23,10 @@
   <h2>제품 이미지를 업로드하면 추천 플랫폼을 알려드려요</h2>
   <div style="background:#fffbe6; border:1px solid #ffe58f; padding:0.8rem 1rem; margin-bottom:1.2rem; color:#ad8b00;">
     <strong>분석 정확도를 높이려면:</strong><br>
-    제품을 <b>하얀색(흰색) 배경</b>에서 촬영한 이미지를 업로드해 주세요.<br>
-    배경이 단순할수록 AI가 제품을 더 정확하게 분석할 수 있습니다.
+    제품을 <b>흰색 배경</b>에서 촬영한 이미지를 업로드해 주세요.<br>
+    배경이 단순할수록 AI가 제품을 더 정확히 분석할 수 있어요.
   </div>
+
   <form id="uploadForm">
     <input type="file" name="image" accept="image/*" required />
     <button type="submit">업로드 및 분석</button>
@@ -48,6 +49,7 @@
     const fileInput = form.querySelector('input[type="file"]');
     const previewImg = document.getElementById('preview');
 
+    // 이미지 미리보기
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -63,29 +65,31 @@
       }
     });
 
+    // 폼 제출 이벤트
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(form);
 
       try {
-        const res = await fetch('http://localhost:8000/api/recommend-platform', {
+        const res = await fetch('https://smart-funding-ai-249358709999.asia-northeast3.run.app/api/recommend-platform', {
           method: 'POST',
           body: formData
         });
 
         if (res.ok) {
           const data = await res.json();
-          document.getElementById('platformName').textContent = data.platform;
-          document.getElementById('categoryName').textContent = data.category;
-          document.getElementById('reasonText').textContent = data.reason;
-          document.getElementById('labelKoText').textContent = data.label_ko || '';
-          document.getElementById('featureText').textContent = data.feature || '';
+          document.getElementById('platformName').textContent = data.platform || '-';
+          document.getElementById('categoryName').textContent = data.category || '-';
+          document.getElementById('reasonText').textContent = data.reason || '-';
+          document.getElementById('labelKoText').textContent = data.label_ko || '-';
+          document.getElementById('featureText').textContent = data.feature || '-';
+
           // 디자인 분석
           const design = data.design || {};
           let designText = '';
           if (design.main_color) designText += `색상: ${design.main_color} `;
           if (design.material) designText += `재질: ${design.material}`;
-          document.getElementById('designText').textContent = designText.trim();
+          document.getElementById('designText').textContent = designText.trim() || '-';
 
           // 적합도 게이지
           const suitability = data.suitability || {};
@@ -94,10 +98,12 @@
           Object.entries(suitability).forEach(([site, percent]) => {
             const bar = document.createElement('div');
             bar.style.margin = '0.5rem 0';
-            bar.innerHTML = `<strong>${site}</strong> <div style="background:#eee;width:100%;height:18px;position:relative;">
-              <div style="background:#4caf50;width:${percent}%;height:100%;"></div>
-              <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:13px;">${percent}%</span>
-            </div>`;
+            bar.innerHTML = `
+              <strong>${site}</strong>
+              <div style="background:#eee;width:100%;height:18px;position:relative;">
+                <div style="background:#4caf50;width:${percent}%;height:100%;"></div>
+                <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:13px;">${percent}%</span>
+              </div>`;
             gaugeContainer.appendChild(bar);
           });
 
