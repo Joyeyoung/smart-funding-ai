@@ -1,21 +1,19 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-import random
-import tensorflow as tf
+import random, tensorflow as tf
 from PIL import Image
-import numpy as np
-import io
+import numpy as np, io, os
 
 app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.mount("/static", StaticFiles(directory="."), name="static")
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return FileResponse("index.html", media_type="text/html")
 
 model = tf.keras.applications.MobileNetV2(weights="imagenet")
 decode_predictions = tf.keras.applications.mobilenet_v2.decode_predictions
@@ -44,42 +42,28 @@ def label_to_korean(label):
 def rgb_to_color_name(rgb):
     r, g, b = rgb
     if max(rgb) - min(rgb) < 20:
-        if np.mean(rgb) > 200:
-            return "하얀색"
-        elif np.mean(rgb) < 50:
-            return "검은색"
-        else:
-            return "회색"
-    if r > 200 and g > 200 and b < 100:
-        return "노란색"
-    if r > 200 and g < 100 and b < 100:
-        return "빨간색"
-    if r < 100 and g > 200 and b < 100:
-        return "초록색"
-    if r < 100 and g < 100 and b > 200:
-        return "파란색"
-    if r > 200 and g < 100 and b > 200:
-        return "분홍색"
-    if r > 200 and g > 100 and b > 100:
-        return "베이지색"
+        if np.mean(rgb) > 200: return "하얀색"
+        elif np.mean(rgb) < 50: return "검은색"
+        else: return "회색"
+    if r > 200 and g > 200 and b < 100: return "노란색"
+    if r > 200 and g < 100 and b < 100: return "빨간색"
+    if r < 100 and g > 200 and b < 100: return "초록색"
+    if r < 100 and g < 100 and b > 200: return "파란색"
+    if r > 200 and g < 100 and b > 200: return "분홍색"
+    if r > 200 and g > 100 and b > 100: return "베이지색"
     return "기타"
 
 def guess_material(rgb):
-    if np.mean(rgb) > 200:
-        return "플라스틱/세라믹"
-    if np.mean(rgb) < 60:
-        return "금속/고무"
-    if abs(rgb[0] - rgb[1]) < 20 and abs(rgb[1] - rgb[2]) < 20 and 100 < np.mean(rgb) < 200:
-        return "천/패브릭"
+    if np.mean(rgb) > 200: return "플라스틱/세라믹"
+    if np.mean(rgb) < 60: return "금속/고무"
+    if abs(rgb[0]-rgb[1])<20 and abs(rgb[1]-rgb[2])<20 and 100<np.mean(rgb)<200: return "천/패브릭"
     return "복합/기타"
 
 def analyze_design(image_bytes):
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((100, 100))
     arr = np.array(img)
     main_color = np.mean(arr.reshape(-1, 3), axis=0)
-    color_name = rgb_to_color_name(main_color)
-    material = guess_material(main_color)
-    return {"main_color": color_name, "material": material}
+    return {"main_color": rgb_to_color_name(main_color), "material": guess_material(main_color)}
 
 @app.post("/api/recommend-platform")
 async def recommend_platform(image: UploadFile = File(...)):
@@ -92,29 +76,19 @@ async def recommend_platform(image: UploadFile = File(...)):
     info = LABEL_INFO.get(label, {"feature": f"{label_ko}(으)로 분류된 제품입니다."})
     design_info = analyze_design(image_bytes)
     suitability = {k: random.randint(50, 100) for k in ["와디즈", "킥스타터", "마쿠아게", "젝젝"]}
-
     if "mug" in label or "cup" in label:
         platform, category, reason = "와디즈", "리빙 소품", "머그컵 등 리빙 제품은 국내 플랫폼에 적합합니다."
     elif "laptop" in label or "cellular" in label:
         platform, category, reason = "킥스타터", "테크/디자인", "테크 제품은 글로벌 시장에 적합합니다."
     else:
-        platform, category, reason = (
-            "젝젝",
-            "라이프스타일",
-            f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다."
-        )
-
+        platform, category, reason = "젝젝", "라이프스타일", f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다."
     return {
-        "platform": platform,
-        "category": category,
-        "reason": reason,
-        "feature": info["feature"],
-        "label_ko": label_ko,
-        "design": design_info,
-        "suitability": suitability
+        "platform": platform, "category": category, "reason": reason,
+        "feature": info["feature"], "label_ko": label_ko,
+        "design": design_info, "suitability": suitability
     }
-
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080)
+    port = int(os.getenv("PORT","8080"))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
