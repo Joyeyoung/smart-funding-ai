@@ -158,7 +158,8 @@ async def recommend_platform(image: UploadFile = File(...)):
 
     return result
 
-# 맨 마지막
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080)
+
 
