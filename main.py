@@ -98,7 +98,11 @@ async def recommend_platform(image: UploadFile = File(...)):
     elif "laptop" in label or "cellular" in label:
         platform, category, reason = "킥스타터", "테크/디자인", "테크 제품은 글로벌 시장에 적합합니다."
     else:
-        platform, category, reason = "젝젝", "라이프스타일", f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다."
+        platform, category, reason = (
+            "젝젝",
+            "라이프스타일",
+            f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다."
+        )
 
     return {
         "platform": platform,
@@ -110,7 +114,7 @@ async def recommend_platform(image: UploadFile = File(...)):
         "suitability": suitability
     }
 
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080)
-
