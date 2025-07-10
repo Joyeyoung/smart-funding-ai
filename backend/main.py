@@ -14,8 +14,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://smart-funding-ai.vercel.app",
-        "https://smart-funding-ai-git-main-joyeyoungs-projects.vercel.app",
-        "https://smart-funding-d86jvv8j0-joyeyoungs-projects.vercel.app"
+        "https://smart-funding-a11tg02j1-joyeyoungs-projects.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
