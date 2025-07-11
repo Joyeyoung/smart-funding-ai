@@ -1,28 +1,45 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-import random, tensorflow as tf
+import tensorflow as tf
 from PIL import Image
-import numpy as np, io, os
+import numpy as np
+import io, os, random
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-@app.get("/", include_in_schema=False)
-async def root():
-    return FileResponse("index.html", media_type="text/html")
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], allow_credentials=True,
+    allow_methods=["*"], allow_headers=["*"]
+)
 
+# 정적 파일 제공
 app.mount("/static", StaticFiles(directory="."), name="static")
 
-model = tf.keras.applications.MobileNetV2(weights="imagenet")
+# 루트 경로 → index.html 또는 대체 메시지
+@app.get("/", include_in_schema=False)
+async def root():
+    if os.path.exists("index.html"):
+        return FileResponse("index.html", media_type="text/html")
+    return JSONResponse({"message": "서비스 준비 완료"}, status_code=200)
+
+# Lazy-load 모델 설정
+model = None
+def get_model():
+    global model
+    if model is None:
+        model = tf.keras.applications.MobileNetV2(weights="imagenet")
+    return model
+
 decode_predictions = tf.keras.applications.mobilenet_v2.decode_predictions
 
 def preprocess_image(image_bytes):
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     img = img.resize((224, 224))
-    arr = np.array(img)
-    arr = tf.keras.applications.mobilenet_v2.preprocess_input(arr)
+    arr = tf.keras.applications.mobilenet_v2.preprocess_input(np.array(img))
     return np.expand_dims(arr, axis=0)
 
 LABEL_INFO = {
@@ -34,17 +51,13 @@ LABEL_INFO = {
 }
 
 def label_to_korean(label):
-    info = LABEL_INFO.get(label)
-    if info and "ko_name" in info:
-        return info["ko_name"]
-    return label.replace('_', ' ')
+    return LABEL_INFO.get(label, {}).get("ko_name", label.replace('_', ' '))
 
 def rgb_to_color_name(rgb):
     r, g, b = rgb
     if max(rgb) - min(rgb) < 20:
-        if np.mean(rgb) > 200: return "하얀색"
-        elif np.mean(rgb) < 50: return "검은색"
-        else: return "회색"
+        mean_val = np.mean(rgb)
+        return "하얀색" if mean_val > 200 else "검은색" if mean_val < 50 else "회색"
     if r > 200 and g > 200 and b < 100: return "노란색"
     if r > 200 and g < 100 and b < 100: return "빨간색"
     if r < 100 and g > 200 and b < 100: return "초록색"
@@ -54,40 +67,53 @@ def rgb_to_color_name(rgb):
     return "기타"
 
 def guess_material(rgb):
-    if np.mean(rgb) > 200: return "플라스틱/세라믹"
-    if np.mean(rgb) < 60: return "금속/고무"
-    if abs(rgb[0]-rgb[1])<20 and abs(rgb[1]-rgb[2])<20 and 100<np.mean(rgb)<200: return "천/패브릭"
+    mean_val = np.mean(rgb)
+    if mean_val > 200: return "플라스틱/세라믹"
+    if mean_val < 60: return "금속/고무"
+    if all(abs(rgb[i]-rgb[i+1]) < 20 for i in range(2)) and 100 < mean_val < 200:
+        return "천/패브릭"
     return "복합/기타"
 
 def analyze_design(image_bytes):
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((100, 100))
-    arr = np.array(img)
-    main_color = np.mean(arr.reshape(-1,3), axis=0)
-    return {"main_color": rgb_to_color_name(main_color), "material": guess_material(main_color)}
+    avg_color = np.mean(np.array(img).reshape(-1, 3), axis=0)
+    return {
+        "main_color": rgb_to_color_name(avg_color),
+        "material": guess_material(avg_color)
+    }
 
 @app.post("/api/recommend-platform")
 async def recommend_platform(image: UploadFile = File(...)):
     image_bytes = await image.read()
     input_tensor = preprocess_image(image_bytes)
-    preds = model.predict(input_tensor)
-    label = tf.keras.applications.mobilenet_v2.decode_predictions(preds, top=1)[0][0][1]
+    preds = get_model().predict(input_tensor)
+    label = decode_predictions(preds, top=1)[0][0][1]
+
     label_ko = label_to_korean(label)
     info = LABEL_INFO.get(label, {"feature": f"{label_ko}(으)로 분류된 제품입니다."})
     design_info = analyze_design(image_bytes)
-    suitability = {k: random.randint(50,100) for k in ["와디즈","킥스타터","마쿠아게","젝젝"]}
+    suitability = {k: random.randint(50, 100) for k in ["와디즈", "킥스타터", "마쿠아게", "젝젝"]}
+
+    # 추천 로직
     if "mug" in label or "cup" in label:
         platform, category, reason = "와디즈", "리빙 소품", "머그컵 등 리빙 제품은 국내 플랫폼에 적합합니다."
     elif "laptop" in label or "cellular" in label:
         platform, category, reason = "킥스타터", "테크/디자인", "테크 제품은 글로벌 시장에 적합합니다."
     else:
         platform, category, reason = "젝젝", "라이프스타일", f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다."
+
     return {
-        "platform": platform, "category": category, "reason": reason,
-        "feature": info["feature"], "label_ko": label_ko,
-        "design": design_info, "suitability": suitability
+        "platform": platform,
+        "category": category,
+        "reason": reason,
+        "feature": info["feature"],
+        "label_ko": label_ko,
+        "design": design_info,
+        "suitability": suitability
     }
 
+# Cloud Run용
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT","8080"))
+    port = int(os.getenv("PORT", 8080))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
