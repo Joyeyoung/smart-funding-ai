@@ -35,7 +35,8 @@
   </div>
 
   <script>
-    const SERVICE_URL = 'https://your-cloud-run-url.run.app';  // ← 실제 배포 URL로 변경해주세요
+    // 실제 Cloud Run API 주소 사용
+    const SERVICE_URL = 'https://smart-funding-ai-249358709999.asia-northeast3.run.app';
 
     const form = document.getElementById('uploadForm');
     const fileInput = form.querySelector('input[name="image"]');
@@ -58,8 +59,15 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("이미지를 선택해 주세요.");
+        return;
+      }
+
       const formData = new FormData();
-      formData.append('image', fileInput.files[0]);
+      formData.append('image', file);
 
       try {
         const res = await fetch(`${SERVICE_URL}/api/recommend-platform`, {
@@ -67,7 +75,11 @@
           body: formData
         });
 
-        if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`서버 오류 (${res.status}): ${errorText}`);
+        }
+
         const data = await res.json();
 
         document.getElementById('platformName').textContent = data.platform || '-';
@@ -98,8 +110,9 @@
         });
 
         document.getElementById('result').style.display = 'block';
+
       } catch (err) {
-        alert(err.message);
+        alert(`요청 중 오류가 발생했습니다:\n${err.message}`);
         console.error(err);
       }
     });
