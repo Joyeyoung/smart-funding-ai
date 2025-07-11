@@ -35,7 +35,6 @@
   </div>
 
   <script>
-    // 실제 Cloud Run API 주소 사용
     const SERVICE_URL = 'https://smart-funding-ai-249358709999.asia-northeast3.run.app';
 
     const form = document.getElementById('uploadForm');
@@ -112,8 +111,8 @@
         document.getElementById('result').style.display = 'block';
 
       } catch (err) {
-        alert(`요청 중 오류가 발생했습니다:\n${err.message}`);
-        console.error(err);
+        alert(`요청 실패: ${err.message}`);
+        console.error('fetch 오류:', err);
       }
     });
   </script>
