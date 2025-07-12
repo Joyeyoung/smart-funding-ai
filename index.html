@@ -1,119 +1,418 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>펀딩 플랫폼 추천</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 펀딩 플랫폼 추천</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 2rem; padding: 2rem; max-width: 600px; }
-    #result { margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; background: #f9f9f9; display: none; }
+    @keyframes fade-in {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fade-in 0.3s ease-out; }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin { animation: spin 1s linear infinite; }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #f3e8ff 0%, #dbeafe 50%, #cffafe 100%);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(to right, #9333ea, #2563eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+    }
+    
+    .drop-zone:hover {
+      border-color: #a855f7;
+      background: linear-gradient(135deg, #faf5ff, #f0f9ff);
+    }
+    
+    .drop-zone.dragover {
+      border-color: #7c3aed;
+      background: linear-gradient(135deg, #f3e8ff, #dbeafe);
+    }
   </style>
 </head>
-<body>
-  <h2>제품 이미지를 업로드하면 추천 플랫폼을 알려드려요</h2>
-  <div style="background:#fffbe6;border:1px solid #ffe58f;padding:0.8rem 1rem;margin-bottom:1.2rem;color:#ad8b00;">
-    <strong>분석 정확도를 높이려면:</strong><br>
-    제품을 <b>흰색 배경</b>에서 촬영한 이미지를 업로드해 주세요.<br>
-    배경이 단순할수록 AI가 제품을 더 정확히 분석할 수 있어요.
-  </div>
+<body class="min-h-screen gradient-bg">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    
+    <!-- Header Section -->
+    <div class="text-center mb-8">
+      <div class="flex justify-center items-center gap-2 mb-4">
+        <div id="sparkles-icon" class="w-8 h-8 text-purple-600"></div>
+        <h1 class="text-4xl font-bold gradient-text">AI 펀딩 플랫폼 추천</h1>
+      </div>
+      <p class="text-lg text-gray-600 mb-6">
+        제품 이미지를 업로드하면 AI가 분석하여 최적의 펀딩 플랫폼을 추천해드려요
+      </p>
+      
+      <!-- Tip Alert -->
+      <div class="max-w-2xl mx-auto bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4">
+        <div class="flex items-start gap-2">
+          <div id="lightbulb-icon" class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"></div>
+          <div class="text-amber-800 text-left">
+            <strong>분석 정확도를 높이려면:</strong><br>
+            제품을 <strong>흰색 배경</strong>에서 촬영한 이미지를 업로드해 주세요.
+            배경이 단순할수록 AI가 제품을 더 정확히 분석할 수 있어요.
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <form id="uploadForm">
-    <input type="file" name="image" accept="image/*" required />
-    <button type="submit">업로드 및 분석</button>
-  </form>
+    <!-- Upload and Preview Section -->
+    <div class="grid lg:grid-cols-2 gap-8 mb-8">
+      
+      <!-- Upload Card -->
+      <div class="shadow-lg border-0 glass-card rounded-lg">
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-2">
+            <div id="upload-icon" class="w-5 h-5 text-blue-600"></div>
+            <h3 class="text-xl font-semibold">이미지 업로드</h3>
+          </div>
+          <p class="text-sm text-gray-500 mb-4">분석할 제품의 이미지를 선택해주세요</p>
+          
+          <!-- File Input and Drop Zone -->
+          <input type="file" id="fileInput" accept="image/*" class="hidden">
+          <div id="dropZone" class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-all duration-200">
+            <div class="flex flex-col items-center gap-4">
+              <div class="p-4 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full">
+                <div id="upload-icon-large" class="w-8 h-8 text-purple-600"></div>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-700 mb-2">이미지를 업로드하세요</h4>
+                <p class="text-sm text-gray-500 mb-4">클릭하거나 드래그해서 파일을 선택해주세요</p>
+              </div>
+              <button type="button" class="inline-flex items-center gap-2 px-4 py-2 border border-purple-300 text-purple-600 rounded-md hover:bg-purple-50 transition-colors">
+                <div id="image-icon" class="w-4 h-4"></div>
+                파일 선택
+              </button>
+            </div>
+          </div>
+          
+          <!-- Analysis Button -->
+          <div id="analysisButtonContainer" class="mt-4 text-center hidden">
+            <button id="analysisButton" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-2 rounded-md transition-all duration-200">
+              <div class="flex items-center gap-2">
+                <div id="chart-icon" class="w-4 h-4"></div>
+                <span>AI 분석 시작</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
 
-  <img id="preview" style="display:none;margin-top:1rem;max-width:100%;border:1px solid #ccc;" />
+      <!-- Preview Card -->
+      <div id="previewCard" class="shadow-lg border-0 glass-card rounded-lg hidden">
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <div id="image-preview-icon" class="w-5 h-5 text-green-600"></div>
+            <h3 class="text-xl font-semibold">이미지 미리보기</h3>
+          </div>
+          <div class="relative">
+            <img id="previewImage" alt="업로드된 이미지" class="w-full h-64 object-contain rounded-lg border-2 border-gray-200 bg-white">
+            <div id="loadingOverlay" class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm rounded-lg items-center justify-center hidden">
+              <div class="bg-white rounded-full p-4">
+                <div class="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div id="result">
-    <h3>추천 플랫폼</h3>
-    <p><strong>플랫폼:</strong> <span id="platformName"></span></p>
-    <p><strong>카테고리:</strong> <span id="categoryName"></span></p>
-    <p><strong>설명:</strong> <span id="reasonText"></span></p>
-    <p><strong>AI 분류(한국어):</strong> <span id="labelKoText"></span></p>
-    <p><strong>AI 분석 특징:</strong> <span id="featureText"></span></p>
-    <p><strong>디자인 분석:</strong> <span id="designText"></span></p>
-    <div id="gaugeContainer" style="margin-top:1rem;"></div>
+    <!-- Analysis Result Section -->
+    <div id="analysisResult" class="space-y-6 animate-fade-in hidden">
+      
+      <!-- Main Result Card -->
+      <div class="shadow-xl border-0 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+        <div class="p-6">
+          <div class="flex items-center gap-2 text-2xl font-semibold mb-6">
+            <div id="target-icon" class="w-6 h-6 text-green-600"></div>
+            AI 분석 결과
+          </div>
+          
+          <!-- Platform and Category -->
+          <div class="grid md:grid-cols-2 gap-4 mb-6">
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <div id="trending-icon" class="w-4 h-4 text-blue-600"></div>
+                <span class="font-semibold text-gray-700">추천 플랫폼</span>
+              </div>
+              <div id="platformBadge" class="inline-flex items-center rounded-full px-4 py-2 text-lg bg-blue-100 text-blue-800">-</div>
+            </div>
+            
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <div id="tag-icon" class="w-4 h-4 text-purple-600"></div>
+                <span class="font-semibold text-gray-700">카테고리</span>
+              </div>
+              <div id="categoryBadge" class="inline-flex items-center rounded-full px-4 py-2 text-lg border border-purple-200 text-purple-700 bg-white">-</div>
+            </div>
+          </div>
+
+          <!-- Reason and Features -->
+          <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div id="message-icon" class="w-4 h-4 text-green-600"></div>
+                <span class="font-semibold text-gray-700">추천 이유</span>
+              </div>
+              <p id="reasonText" class="text-gray-600 leading-relaxed p-3 bg-white rounded-lg border">-</p>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div id="brain-icon" class="w-4 h-4 text-indigo-600"></div>
+                <span class="font-semibold text-gray-700">AI 분석 특징</span>
+              </div>
+              <p id="featureText" class="text-gray-600 leading-relaxed p-3 bg-white rounded-lg border">-</p>
+            </div>
+          </div>
+
+          <!-- AI Classification and Design -->
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div id="brain-icon-2" class="w-4 h-4 text-orange-600"></div>
+                <span class="font-semibold text-gray-700">AI 분류 (한국어)</span>
+              </div>
+              <div id="labelBadge" class="inline-flex items-center rounded-full px-4 py-2 text-base bg-orange-100 text-orange-800">-</div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div id="palette-icon" class="w-4 h-4 text-pink-600"></div>
+                <span class="font-semibold text-gray-700">디자인 분석</span>
+              </div>
+              <p id="designText" class="text-gray-600 p-3 bg-white rounded-lg border">-</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suitability Chart Card -->
+      <div id="suitabilityCard" class="shadow-xl border-0 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg hidden">
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <div id="trending-up-icon" class="w-5 h-5 text-blue-600"></div>
+            <h3 class="text-xl font-semibold">플랫폼별 적합도</h3>
+          </div>
+          <div id="suitabilityContent" class="space-y-4"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
+    // Constants
     const SERVICE_URL = 'https://smart-funding-ai-249358709999.asia-northeast3.run.app';
-
-    const form = document.getElementById('uploadForm');
-    const fileInput = form.querySelector('input[name="image"]');
-    const previewImg = document.getElementById('preview');
-
+    
+    // DOM Elements
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const previewCard = document.getElementById('previewCard');
+    const previewImage = document.getElementById('previewImage');
+    const analysisButtonContainer = document.getElementById('analysisButtonContainer');
+    const analysisButton = document.getElementById('analysisButton');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const analysisResult = document.getElementById('analysisResult');
+    const suitabilityCard = document.getElementById('suitabilityCard');
+    
+    // Initialize Lucide Icons
+    function initializeIcons() {
+      // Create icons using Lucide
+      const iconMappings = {
+        'sparkles-icon': 'Sparkles',
+        'lightbulb-icon': 'Lightbulb',
+        'upload-icon': 'Upload',
+        'upload-icon-large': 'Upload',
+        'image-icon': 'Image',
+        'chart-icon': 'BarChart3',
+        'image-preview-icon': 'Image',
+        'target-icon': 'Target',
+        'trending-icon': 'TrendingUp',
+        'tag-icon': 'Tag',
+        'message-icon': 'MessageSquare',
+        'brain-icon': 'Brain',
+        'brain-icon-2': 'Brain',
+        'palette-icon': 'Palette',
+        'trending-up-icon': 'TrendingUp'
+      };
+      
+      Object.entries(iconMappings).forEach(([id, iconName]) => {
+        const element = document.getElementById(id);
+        if (element && lucide[iconName]) {
+          lucide.createElement(lucide[iconName]).setAttribute('class', element.className);
+          element.parentNode.replaceChild(lucide.createElement(lucide[iconName]), element);
+          element.parentNode.lastChild.setAttribute('id', id);
+          element.parentNode.lastChild.setAttribute('class', element.className);
+        }
+      });
+    }
+    
+    // File handling
+    function handleFileSelect(file) {
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewCard.classList.remove('hidden');
+        analysisButtonContainer.classList.remove('hidden');
+        analysisResult.classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    // Event Listeners
+    dropZone.addEventListener('click', () => fileInput.click());
+    
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = ev => {
-          previewImg.src = ev.target.result;
-          previewImg.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      } else {
-        previewImg.style.display = 'none';
-        previewImg.src = '';
+      handleFileSelect(file);
+    });
+    
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect(file);
       }
     });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
+    
+    // Analysis
+    analysisButton.addEventListener('click', async () => {
       const file = fileInput.files[0];
       if (!file) {
-        alert("이미지를 선택해 주세요.");
+        alert('이미지를 선택해 주세요.');
         return;
       }
-
-      const formData = new FormData();
-      formData.append('image', file);
-
+      
+      // Show loading
+      analysisButton.innerHTML = `
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          분석 중...
+        </div>
+      `;
+      analysisButton.disabled = true;
+      loadingOverlay.classList.remove('hidden');
+      loadingOverlay.classList.add('flex');
+      
       try {
-        const res = await fetch(`${SERVICE_URL}/api/recommend-platform`, {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch(`${SERVICE_URL}/api/recommend-platform`, {
           method: 'POST',
           body: formData
         });
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`서버 오류 (${res.status}): ${errorText}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`서버 오류 (${response.status}): ${errorText}`);
         }
-
-        const data = await res.json();
-
-        document.getElementById('platformName').textContent = data.platform || '-';
-        document.getElementById('categoryName').textContent = data.category || '-';
-        document.getElementById('reasonText').textContent = data.reason || '-';
-        document.getElementById('labelKoText').textContent = data.label_ko || '-';
-        document.getElementById('featureText').textContent = data.feature || '-';
-
-        const design = data.design || {};
-        const designText = [
-          design.main_color ? `색상: ${design.main_color}` : '',
-          design.material ? `재질: ${design.material}` : ''
-        ].filter(Boolean).join(' / ');
-        document.getElementById('designText').textContent = designText || '-';
-
-        const gaugeContainer = document.getElementById('gaugeContainer');
-        gaugeContainer.innerHTML = '';
-        Object.entries(data.suitability || {}).forEach(([site, pct]) => {
-          const bar = document.createElement('div');
-          bar.style.margin = '0.5rem 0';
-          bar.innerHTML = `
-            <strong>${site}</strong>
-            <div style="background:#eee;width:100%;height:18px;position:relative;">
-              <div style="background:#4caf50;width:${pct}%;height:100%;"></div>
-              <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:13px;">${pct}%</span>
-            </div>`;
-          gaugeContainer.appendChild(bar);
-        });
-
-        document.getElementById('result').style.display = 'block';
-
-      } catch (err) {
-        alert(`요청 실패: ${err.message}`);
-        console.error('fetch 오류:', err);
+        
+        const data = await response.json();
+        displayResults(data);
+        
+      } catch (error) {
+        alert(`요청 실패: ${error.message}`);
+        console.error('분석 오류:', error);
+      } finally {
+        // Hide loading
+        analysisButton.innerHTML = `
+          <div class="flex items-center gap-2">
+            <div id="chart-icon-reset" class="w-4 h-4"></div>
+            AI 분석 시작
+          </div>
+        `;
+        analysisButton.disabled = false;
+        loadingOverlay.classList.add('hidden');
+        loadingOverlay.classList.remove('flex');
       }
+    });
+    
+    // Display results
+    function displayResults(data) {
+      // Update badges and text
+      document.getElementById('platformBadge').textContent = data.platform || '-';
+      document.getElementById('categoryBadge').textContent = data.category || '-';
+      document.getElementById('reasonText').textContent = data.reason || '-';
+      document.getElementById('featureText').textContent = data.feature || '-';
+      document.getElementById('labelBadge').textContent = data.label_ko || '-';
+      
+      // Design text
+      const design = data.design || {};
+      const designText = [
+        design.main_color ? `색상: ${design.main_color}` : '',
+        design.material ? `재질: ${design.material}` : ''
+      ].filter(Boolean).join(' / ');
+      document.getElementById('designText').textContent = designText || '-';
+      
+      // Suitability chart
+      const suitabilityContent = document.getElementById('suitabilityContent');
+      if (data.suitability && Object.keys(data.suitability).length > 0) {
+        suitabilityContent.innerHTML = '';
+        Object.entries(data.suitability).forEach(([platform, percentage]) => {
+          const progressDiv = document.createElement('div');
+          progressDiv.className = 'space-y-2';
+          
+          const badgeClass = percentage >= 70 
+            ? 'bg-green-100 text-green-800' 
+            : percentage >= 50 
+            ? 'bg-yellow-100 text-yellow-800'
+            : 'bg-gray-100 text-gray-600';
+          
+          progressDiv.innerHTML = `
+            <div class="flex justify-between items-center">
+              <span class="font-medium text-gray-700">${platform}</span>
+              <div class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass}">
+                ${percentage}%
+              </div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+            </div>
+          `;
+          
+          suitabilityContent.appendChild(progressDiv);
+        });
+        suitabilityCard.classList.remove('hidden');
+      }
+      
+      // Show results
+      analysisResult.classList.remove('hidden');
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeIcons();
     });
   </script>
 </body>
