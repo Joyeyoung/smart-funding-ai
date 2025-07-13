@@ -1,9 +1,9 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 import tensorflow as tf
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import numpy as np
 import io, os, random
 
@@ -12,12 +12,21 @@ app = FastAPI()
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], allow_credentials=True,
-    allow_methods=["*"], allow_headers=["*"]
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # 정적 파일 제공
 app.mount("/static", StaticFiles(directory="."), name="static")
+
+# favicon.ico 요청 처리 (500 방지)
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    if os.path.exists("favicon.ico"):
+        return FileResponse("favicon.ico", media_type="image/x-icon")
+    return Response(content="", media_type="image/x-icon")
 
 # 루트 경로 → index.html 또는 대체 메시지
 @app.get("/", include_in_schema=False)
@@ -31,13 +40,20 @@ model = None
 def get_model():
     global model
     if model is None:
-        model = tf.keras.applications.MobileNetV2(weights="imagenet")
+        try:
+            model = tf.keras.applications.MobileNetV2(weights="imagenet")
+        except Exception as e:
+            print("모델 로딩 실패:", str(e))
+            raise RuntimeError("모델 로딩에 실패했습니다.")
     return model
 
 decode_predictions = tf.keras.applications.mobilenet_v2.decode_predictions
 
 def preprocess_image(image_bytes):
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    try:
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    except UnidentifiedImageError:
+        raise HTTPException(status_code=400, detail="이미지 파일을 불러올 수 없습니다.")
     img = img.resize((224, 224))
     arr = tf.keras.applications.mobilenet_v2.preprocess_input(np.array(img))
     return np.expand_dims(arr, axis=0)
@@ -70,12 +86,15 @@ def guess_material(rgb):
     mean_val = np.mean(rgb)
     if mean_val > 200: return "플라스틱/세라믹"
     if mean_val < 60: return "금속/고무"
-    if all(abs(rgb[i]-rgb[i+1]) < 20 for i in range(2)) and 100 < mean_val < 200:
+    if all(abs(rgb[i] - rgb[i + 1]) < 20 for i in range(2)) and 100 < mean_val < 200:
         return "천/패브릭"
     return "복합/기타"
 
 def analyze_design(image_bytes):
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((100, 100))
+    try:
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((100, 100))
+    except UnidentifiedImageError:
+        raise HTTPException(status_code=400, detail="이미지 분석 실패")
     avg_color = np.mean(np.array(img).reshape(-1, 3), axis=0)
     return {
         "main_color": rgb_to_color_name(avg_color),
@@ -84,10 +103,13 @@ def analyze_design(image_bytes):
 
 @app.post("/api/recommend-platform")
 async def recommend_platform(image: UploadFile = File(...)):
-    image_bytes = await image.read()
-    input_tensor = preprocess_image(image_bytes)
-    preds = get_model().predict(input_tensor)
-    label = decode_predictions(preds, top=1)[0][0][1]
+    try:
+        image_bytes = await image.read()
+        input_tensor = preprocess_image(image_bytes)
+        preds = get_model().predict(input_tensor)
+        label = decode_predictions(preds, top=1)[0][0][1]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"예측 중 오류 발생: {str(e)}")
 
     label_ko = label_to_korean(label)
     info = LABEL_INFO.get(label, {"feature": f"{label_ko}(으)로 분류된 제품입니다."})
@@ -112,8 +134,4 @@ async def recommend_platform(image: UploadFile = File(...)):
         "suitability": suitability
     }
 
-# Cloud Run용
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8080))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+# Cloud Run에서는 __main__ 실행 안 해도 됨
