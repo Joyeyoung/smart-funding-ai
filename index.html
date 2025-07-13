@@ -1,419 +1,609 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 펀딩 플랫폼 추천</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
-    @keyframes fade-in {
-      0% { opacity: 0; transform: translateY(10px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in { animation: fade-in 0.3s ease-out; }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .animate-spin { animation: spin 1s linear infinite; }
-    
-    .gradient-bg {
-      background: linear-gradient(135deg, #f3e8ff 0%, #dbeafe 50%, #cffafe 100%);
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: linear-gradient(135deg, #f8f4ff 0%, #e8f4fd 50%, #e0f7ff 100%);
+      min-height: 100vh;
     }
     
-    .gradient-text {
-      background: linear-gradient(to right, #9333ea, #2563eb);
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .title svg {
+      width: 2rem;
+      height: 2rem;
+      color: #7c3aed;
+    }
+    
+    .title h1 {
+      font-size: 2.5rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      margin: 0;
     }
     
-    .glass-card {
+    .subtitle {
+      font-size: 1.125rem;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+    }
+    
+    .tip-card {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border: 1px solid #fbbf24;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      max-width: 32rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .tip-card strong {
+      color: #92400e;
+    }
+    
+    .tip-card p {
+      color: #92400e;
+      margin: 0.5rem 0 0 0;
+    }
+    
+    .upload-container {
+      max-width: 32rem;
+      margin: 0 auto 2rem auto;
+    }
+    
+    .upload-card {
       background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(8px);
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      padding: 1.5rem;
     }
     
-    .drop-zone:hover {
+    .upload-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #374151;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .upload-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: #2563eb;
+    }
+    
+    .upload-description {
+      color: #6b7280;
+      margin: 0 0 1.5rem 0;
+    }
+    
+    .upload-box {
+      border: 2px dashed #d1d5db;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      text-align: center;
+      background: linear-gradient(135deg, #f9fafb, #ffffff);
+      transition: border-color 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .upload-box:hover {
       border-color: #a855f7;
-      background: linear-gradient(135deg, #faf5ff, #f0f9ff);
     }
     
-    .drop-zone.dragover {
-      border-color: #7c3aed;
-      background: linear-gradient(135deg, #f3e8ff, #dbeafe);
+    .upload-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .upload-icon-container {
+      padding: 1rem;
+      background: linear-gradient(135deg, #ddd6fe, #bfdbfe);
+      border-radius: 50%;
+    }
+    
+    .upload-svg {
+      width: 2rem;
+      height: 2rem;
+      color: #7c3aed;
+    }
+    
+    .upload-content h4 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #374151;
+      margin: 0;
+    }
+    
+    .upload-content p {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin: 0;
+    }
+    
+    .file-select-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid #c084fc;
+      border-radius: 0.375rem;
+      background: transparent;
+      color: #7c3aed;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background-color 0.3s ease;
+    }
+    
+    .file-select-btn:hover {
+      background: #f3e8ff;
+    }
+    
+    .file-select-btn svg {
+      width: 1rem;
+      height: 1rem;
+    }
+    
+    .preview-content {
+      position: relative;
+    }
+    
+    .image-container {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    
+    .preview-image {
+      width: 100%;
+      max-height: 16rem;
+      object-fit: contain;
+      border-radius: 0.5rem;
+      border: 2px solid #e5e7eb;
+      background: white;
+    }
+    
+    .analysis-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(4px);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .spinner-container {
+      background: white;
+      border-radius: 50%;
+      padding: 1rem;
+    }
+    
+    .spinner {
+      width: 2rem;
+      height: 2rem;
+      border: 4px solid #7c3aed;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .clear-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #d1d5db;
+      border-radius: 0.25rem;
+      padding: 0.25rem;
+      width: 2rem;
+      height: 2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .clear-btn:hover {
+      background: white;
+    }
+    
+    .clear-btn svg {
+      width: 1rem;
+      height: 1rem;
+      color: #374151;
+    }
+    
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+    }
+    
+    .change-image-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid #c084fc;
+      border-radius: 0.375rem;
+      background: transparent;
+      color: #7c3aed;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background-color 0.3s ease;
+    }
+    
+    .change-image-btn:hover {
+      background: #f3e8ff;
+    }
+    
+    .change-image-btn svg {
+      width: 1rem;
+      height: 1rem;
+    }
+    
+    .analyze-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 2rem;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .analyze-btn:hover {
+      background: linear-gradient(135deg, #6d28d9, #1d4ed8);
+    }
+    
+    .analyze-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    
+    .analyze-btn svg {
+      width: 1rem;
+      height: 1rem;
+    }
+    
+    .button-spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid white;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    #result { 
+      margin-top: 1.5rem; 
+      padding: 1rem; 
+      border: 1px solid #ddd; 
+      background: #f9f9f9; 
+      display: none; 
     }
   </style>
 </head>
-<body class="min-h-screen gradient-bg">
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
-    
-    <!-- Header Section -->
-    <div class="text-center mb-8">
-      <div class="flex justify-center items-center gap-2 mb-4">
-        <div id="sparkles-icon" class="w-8 h-8 text-purple-600"></div>
-        <h1 class="text-4xl font-bold gradient-text">AI 펀딩 플랫폼 추천</h1>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
+        </svg>
+        <h1>AI 펀딩 플랫폼 추천</h1>
       </div>
-      <p class="text-lg text-gray-600 mb-6">
-        제품 이미지를 업로드하면 AI가 분석하여 최적의 펀딩 플랫폼을 추천해드려요
-      </p>
+      <p class="subtitle">제품 이미지를 업로드하면 AI가 분석하여 최적의 펀딩 플랫폼을 추천해드려요</p>
       
-      <!-- Tip Alert -->
-      <div class="max-w-2xl mx-auto bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4">
-        <div class="flex items-start gap-2">
-          <div id="lightbulb-icon" class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"></div>
-          <div class="text-amber-800 text-left">
-            <strong>분석 정확도를 높이려면:</strong><br>
-            제품을 <strong>흰색 배경</strong>에서 촬영한 이미지를 업로드해 주세요.
-            배경이 단순할수록 AI가 제품을 더 정확히 분석할 수 있어요.
-          </div>
-        </div>
+      <div class="tip-card">
+        <strong>분석 정확도를 높이려면:</strong>
+        <p>제품을 <strong>흰색 배경</strong>에서 촬영한 이미지를 업로드해 주세요.<br>
+        배경이 단순할수록 AI가 제품을 더 정확히 분석할 수 있어요.</p>
       </div>
     </div>
 
-    <!-- Upload and Preview Section -->
-    <div class="grid lg:grid-cols-2 gap-8 mb-8">
-      
-      <!-- Upload Card -->
-      <div class="shadow-lg border-0 glass-card rounded-lg">
-        <div class="p-6">
-          <div class="flex items-center gap-2 mb-2">
-            <div id="upload-icon" class="w-5 h-5 text-blue-600"></div>
-            <h3 class="text-xl font-semibold">이미지 업로드</h3>
-          </div>
-          <p class="text-sm text-gray-500 mb-4">분석할 제품의 이미지를 선택해주세요</p>
+    <div class="upload-container">
+      <div class="upload-card">
+        <h3 class="upload-title">
+          <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7,10 12,15 17,10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          이미지 업로드 및 미리보기
+        </h3>
+        <p class="upload-description">분석할 제품의 이미지를 선택해주세요</p>
+        
+        <form id="uploadForm">
+          <input type="file" name="image" accept="image/*" required style="display: none;" />
           
-          <!-- File Input and Drop Zone -->
-          <input type="file" id="fileInput" accept="image/*" class="hidden">
-          <div id="dropZone" class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-all duration-200">
-            <div class="flex flex-col items-center gap-4">
-              <div class="p-4 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full">
-                <div id="upload-icon-large" class="w-8 h-8 text-purple-600"></div>
+          <div id="uploadBox" class="upload-box">
+            <div class="upload-content">
+              <div class="upload-icon-container">
+                <svg class="upload-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7,10 12,15 17,10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
               </div>
-              <div>
-                <h4 class="text-lg font-semibold text-gray-700 mb-2">이미지를 업로드하세요</h4>
-                <p class="text-sm text-gray-500 mb-4">클릭하거나 드래그해서 파일을 선택해주세요</p>
-              </div>
-              <button type="button" class="inline-flex items-center gap-2 px-4 py-2 border border-purple-300 text-purple-600 rounded-md hover:bg-purple-50 transition-colors">
-                <div id="image-icon" class="w-4 h-4"></div>
+              <h4>이미지를 업로드하세요</h4>
+              <p>클릭하거나 드래그해서 파일을 선택해주세요</p>
+              <button type="button" class="file-select-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="9" cy="9" r="2"></circle>
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                </svg>
                 파일 선택
               </button>
             </div>
           </div>
           
-          <!-- Analysis Button -->
-          <div id="analysisButtonContainer" class="mt-4 text-center hidden">
-            <button id="analysisButton" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-2 rounded-md transition-all duration-200">
-              <div class="flex items-center gap-2">
-                <div id="chart-icon" class="w-4 h-4"></div>
-                <span>AI 분석 시작</span>
+          <div id="previewContainer" style="display: none;">
+            <div class="preview-content">
+              <div class="image-container">
+                <img id="preview" class="preview-image" />
+                <div id="analysisOverlay" class="analysis-overlay" style="display: none;">
+                  <div class="spinner-container">
+                    <div class="spinner"></div>
+                  </div>
+                </div>
+                <button type="button" id="clearBtn" class="clear-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                </button>
               </div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Preview Card -->
-      <div id="previewCard" class="shadow-lg border-0 glass-card rounded-lg hidden">
-        <div class="p-6">
-          <div class="flex items-center gap-2 mb-4">
-            <div id="image-preview-icon" class="w-5 h-5 text-green-600"></div>
-            <h3 class="text-xl font-semibold">이미지 미리보기</h3>
-          </div>
-          <div class="relative">
-            <img id="previewImage" alt="업로드된 이미지" class="w-full h-64 object-contain rounded-lg border-2 border-gray-200 bg-white">
-            <div id="loadingOverlay" class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm rounded-lg items-center justify-center hidden">
-              <div class="bg-white rounded-full p-4">
-                <div class="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+              <div class="action-buttons">
+                <button type="button" id="changeImageBtn" class="change-image-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="9" cy="9" r="2"></circle>
+                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                  </svg>
+                  다른 이미지 선택
+                </button>
               </div>
             </div>
           </div>
-        </div>
+
+          <div id="analyzeButtonContainer" style="display: none; margin-top: 1.5rem; text-align: center;">
+            <button type="submit" id="analyzeBtn" class="analyze-btn">
+              <span id="analyzeText">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 3v5h5"></path>
+                  <path d="M3 8C3 5.5 5.5 3 8 3h8c2.5 0 5 2.5 5 5v8c0 2.5-2.5 5-5 5H8c-2.5 0-5-2.5-5-5z"></path>
+                  <path d="M12 12V8"></path>
+                  <path d="M12 16h.01"></path>
+                </svg>
+                AI 분석 시작
+              </span>
+              <span id="analyzingText" style="display: none;">
+                <div class="button-spinner"></div>
+                분석 중...
+              </span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
-    <!-- Analysis Result Section -->
-    <div id="analysisResult" class="space-y-6 animate-fade-in hidden">
-      
-      <!-- Main Result Card -->
-      <div class="shadow-xl border-0 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
-        <div class="p-6">
-          <div class="flex items-center gap-2 text-2xl font-semibold mb-6">
-            <div id="target-icon" class="w-6 h-6 text-green-600"></div>
-            AI 분석 결과
-          </div>
-          
-          <!-- Platform and Category -->
-          <div class="grid md:grid-cols-2 gap-4 mb-6">
-            <div class="space-y-2">
-              <div class="flex items-center gap-2">
-                <div id="trending-icon" class="w-4 h-4 text-blue-600"></div>
-                <span class="font-semibold text-gray-700">추천 플랫폼</span>
-              </div>
-              <div id="platformBadge" class="inline-flex items-center rounded-full px-4 py-2 text-lg bg-blue-100 text-blue-800">-</div>
-            </div>
-            
-            <div class="space-y-2">
-              <div class="flex items-center gap-2">
-                <div id="tag-icon" class="w-4 h-4 text-purple-600"></div>
-                <span class="font-semibold text-gray-700">카테고리</span>
-              </div>
-              <div id="categoryBadge" class="inline-flex items-center rounded-full px-4 py-2 text-lg border border-purple-200 text-purple-700 bg-white">-</div>
-            </div>
-          </div>
-
-          <!-- Reason and Features -->
-          <div class="grid md:grid-cols-2 gap-6 mb-6">
-            <div class="space-y-3">
-              <div class="flex items-center gap-2">
-                <div id="message-icon" class="w-4 h-4 text-green-600"></div>
-                <span class="font-semibold text-gray-700">추천 이유</span>
-              </div>
-              <p id="reasonText" class="text-gray-600 leading-relaxed p-3 bg-white rounded-lg border">-</p>
-            </div>
-
-            <div class="space-y-3">
-              <div class="flex items-center gap-2">
-                <div id="brain-icon" class="w-4 h-4 text-indigo-600"></div>
-                <span class="font-semibold text-gray-700">AI 분석 특징</span>
-              </div>
-              <p id="featureText" class="text-gray-600 leading-relaxed p-3 bg-white rounded-lg border">-</p>
-            </div>
-          </div>
-
-          <!-- AI Classification and Design -->
-          <div class="grid md:grid-cols-2 gap-6">
-            <div class="space-y-3">
-              <div class="flex items-center gap-2">
-                <div id="brain-icon-2" class="w-4 h-4 text-orange-600"></div>
-                <span class="font-semibold text-gray-700">AI 분류 (한국어)</span>
-              </div>
-              <div id="labelBadge" class="inline-flex items-center rounded-full px-4 py-2 text-base bg-orange-100 text-orange-800">-</div>
-            </div>
-
-            <div class="space-y-3">
-              <div class="flex items-center gap-2">
-                <div id="palette-icon" class="w-4 h-4 text-pink-600"></div>
-                <span class="font-semibold text-gray-700">디자인 분석</span>
-              </div>
-              <p id="designText" class="text-gray-600 p-3 bg-white rounded-lg border">-</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Suitability Chart Card -->
-      <div id="suitabilityCard" class="shadow-xl border-0 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg hidden">
-        <div class="p-6">
-          <div class="flex items-center gap-2 mb-4">
-            <div id="trending-up-icon" class="w-5 h-5 text-blue-600"></div>
-            <h3 class="text-xl font-semibold">플랫폼별 적합도</h3>
-          </div>
-          <div id="suitabilityContent" class="space-y-4"></div>
-        </div>
-      </div>
+    <div id="result">
+      <h3>추천 플랫폼</h3>
+      <p><strong>플랫폼:</strong> <span id="platformName"></span></p>
+      <p><strong>카테고리:</strong> <span id="categoryName"></span></p>
+      <p><strong>설명:</strong> <span id="reasonText"></span></p>
+      <p><strong>AI 분류(한국어):</strong> <span id="labelKoText"></span></p>
+      <p><strong>AI 분석 특징:</strong> <span id="featureText"></span></p>
+      <p><strong>디자인 분석:</strong> <span id="designText"></span></p>
+      <div id="gaugeContainer" style="margin-top:1rem;"></div>
     </div>
   </div>
 
   <script>
-    // Constants
     const SERVICE_URL = 'https://smart-funding-ai-249358709999.asia-northeast3.run.app';
+
+    const form = document.getElementById('uploadForm');
+    const fileInput = form.querySelector('input[name="image"]');
+    const uploadBox = document.getElementById('uploadBox');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImg = document.getElementById('preview');
+    const clearBtn = document.getElementById('clearBtn');
+    const changeImageBtn = document.getElementById('changeImageBtn');
+    const analyzeButtonContainer = document.getElementById('analyzeButtonContainer');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const analyzeText = document.getElementById('analyzeText');
+    const analyzingText = document.getElementById('analyzingText');
+    const analysisOverlay = document.getElementById('analysisOverlay');
+
+    let isAnalyzing = false;
+
+    // 파일 선택 이벤트
+    fileInput.addEventListener('change', handleFileSelect);
+    uploadBox.addEventListener('click', () => fileInput.click());
+    changeImageBtn.addEventListener('click', () => fileInput.click());
     
-    // DOM Elements
-    const fileInput = document.getElementById('fileInput');
-    const dropZone = document.getElementById('dropZone');
-    const previewCard = document.getElementById('previewCard');
-    const previewImage = document.getElementById('previewImage');
-    const analysisButtonContainer = document.getElementById('analysisButtonContainer');
-    const analysisButton = document.getElementById('analysisButton');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const analysisResult = document.getElementById('analysisResult');
-    const suitabilityCard = document.getElementById('suitabilityCard');
-    
-    // Initialize Lucide Icons
-    function initializeIcons() {
-      // Create icons using Lucide
-      const iconMappings = {
-        'sparkles-icon': 'Sparkles',
-        'lightbulb-icon': 'Lightbulb',
-        'upload-icon': 'Upload',
-        'upload-icon-large': 'Upload',
-        'image-icon': 'Image',
-        'chart-icon': 'BarChart3',
-        'image-preview-icon': 'Image',
-        'target-icon': 'Target',
-        'trending-icon': 'TrendingUp',
-        'tag-icon': 'Tag',
-        'message-icon': 'MessageSquare',
-        'brain-icon': 'Brain',
-        'brain-icon-2': 'Brain',
-        'palette-icon': 'Palette',
-        'trending-up-icon': 'TrendingUp'
-      };
-      
-      Object.entries(iconMappings).forEach(([id, iconName]) => {
-        const element = document.getElementById(id);
-        if (element && lucide[iconName]) {
-          lucide.createElement(lucide[iconName]).setAttribute('class', element.className);
-          element.parentNode.replaceChild(lucide.createElement(lucide[iconName]), element);
-          element.parentNode.lastChild.setAttribute('id', id);
-          element.parentNode.lastChild.setAttribute('class', element.className);
-        }
-      });
-    }
-    
-    // File handling
-    function handleFileSelect(file) {
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImage.src = e.target.result;
-        previewCard.classList.remove('hidden');
-        analysisButtonContainer.classList.remove('hidden');
-        analysisResult.classList.add('hidden');
-      };
-      reader.readAsDataURL(file);
-    }
-    
-    // Event Listeners
-    dropZone.addEventListener('click', () => fileInput.click());
-    
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      handleFileSelect(file);
-    });
-    
-    // Drag and drop
-    dropZone.addEventListener('dragover', (e) => {
+    // 드래그 앤 드롭
+    uploadBox.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dropZone.classList.add('dragover');
+      uploadBox.style.borderColor = '#a855f7';
     });
     
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('dragover');
-    });
-    
-    dropZone.addEventListener('drop', (e) => {
+    uploadBox.addEventListener('dragleave', (e) => {
       e.preventDefault();
-      dropZone.classList.remove('dragover');
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) {
-        fileInput.files = e.dataTransfer.files;
-        handleFileSelect(file);
+      uploadBox.style.borderColor = '#d1d5db';
+    });
+    
+    uploadBox.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadBox.style.borderColor = '#d1d5db';
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].type.startsWith('image/')) {
+        fileInput.files = files;
+        handleFileSelect();
       }
     });
-    
-    // Analysis
-    analysisButton.addEventListener('click', async () => {
+
+    // 이미지 제거
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearImage();
+    });
+
+    function handleFileSelect() {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImg.src = e.target.result;
+          showPreview();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        clearImage();
+      }
+    }
+
+    function showPreview() {
+      uploadBox.style.display = 'none';
+      previewContainer.style.display = 'block';
+      analyzeButtonContainer.style.display = 'block';
+    }
+
+    function clearImage() {
+      fileInput.value = '';
+      uploadBox.style.display = 'block';
+      previewContainer.style.display = 'none';
+      analyzeButtonContainer.style.display = 'none';
+      previewImg.src = '';
+      document.getElementById('result').style.display = 'none';
+    }
+
+    // 폼 제출 이벤트
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
       const file = fileInput.files[0];
       if (!file) {
-        alert('이미지를 선택해 주세요.');
+        alert("이미지를 선택해 주세요.");
         return;
       }
-      
-      // Show loading
-      analysisButton.innerHTML = `
-        <div class="flex items-center gap-2">
-          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          분석 중...
-        </div>
-      `;
-      analysisButton.disabled = true;
-      loadingOverlay.classList.remove('hidden');
-      loadingOverlay.classList.add('flex');
-      
+
+      if (isAnalyzing) return;
+
+      setAnalyzingState(true);
+
+      const formData = new FormData();
+      formData.append('image', file);
+
       try {
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        const response = await fetch(`${SERVICE_URL}/api/recommend-platform`, {
+        const res = await fetch(`${SERVICE_URL}/api/recommend-platform`, {
           method: 'POST',
           body: formData
         });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`서버 오류 (${response.status}): ${errorText}`);
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`서버 오류 (${res.status}): ${errorText}`);
         }
-        
-        const data = await response.json();
-        displayResults(data);
-        
-      } catch (error) {
-        alert(`요청 실패: ${error.message}`);
-        console.error('분석 오류:', error);
-      } finally {
-        // Hide loading
-        analysisButton.innerHTML = `
-          <div class="flex items-center gap-2">
-            <div id="chart-icon-reset" class="w-4 h-4"></div>
-            AI 분석 시작
-          </div>
-        `;
-        analysisButton.disabled = false;
-        loadingOverlay.classList.add('hidden');
-        loadingOverlay.classList.remove('flex');
-      }
-    });
-    
-    // Display results
-    function displayResults(data) {
-      // Update badges and text
-      document.getElementById('platformBadge').textContent = data.platform || '-';
-      document.getElementById('categoryBadge').textContent = data.category || '-';
-      document.getElementById('reasonText').textContent = data.reason || '-';
-      document.getElementById('featureText').textContent = data.feature || '-';
-      document.getElementById('labelBadge').textContent = data.label_ko || '-';
-      
-      // Design text
-      const design = data.design || {};
-      const designText = [
-        design.main_color ? `색상: ${design.main_color}` : '',
-        design.material ? `재질: ${design.material}` : ''
-      ].filter(Boolean).join(' / ');
-      document.getElementById('designText').textContent = designText || '-';
-      
-      // Suitability chart
-      const suitabilityContent = document.getElementById('suitabilityContent');
-      if (data.suitability && Object.keys(data.suitability).length > 0) {
-        suitabilityContent.innerHTML = '';
-        Object.entries(data.suitability).forEach(([platform, percentage]) => {
-          const progressDiv = document.createElement('div');
-          progressDiv.className = 'space-y-2';
-          
-          const badgeClass = percentage >= 70 
-            ? 'bg-green-100 text-green-800' 
-            : percentage >= 50 
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-gray-100 text-gray-600';
-          
-          progressDiv.innerHTML = `
-            <div class="flex justify-between items-center">
-              <span class="font-medium text-gray-700">${platform}</span>
-              <div class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass}">
-                ${percentage}%
-              </div>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-3">
-              <div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
-            </div>
-          `;
-          
-          suitabilityContent.appendChild(progressDiv);
+
+        const data = await res.json();
+
+        document.getElementById('platformName').textContent = data.platform || '-';
+        document.getElementById('categoryName').textContent = data.category || '-';
+        document.getElementById('reasonText').textContent = data.reason || '-';
+        document.getElementById('labelKoText').textContent = data.label_ko || '-';
+        document.getElementById('featureText').textContent = data.feature || '-';
+
+        const design = data.design || {};
+        const designText = [
+          design.main_color ? `색상: ${design.main_color}` : '',
+          design.material ? `재질: ${design.material}` : ''
+        ].filter(Boolean).join(' / ');
+        document.getElementById('designText').textContent = designText || '-';
+
+        const gaugeContainer = document.getElementById('gaugeContainer');
+        gaugeContainer.innerHTML = '';
+        Object.entries(data.suitability || {}).forEach(([site, pct]) => {
+          const bar = document.createElement('div');
+          bar.style.margin = '0.5rem 0';
+          bar.innerHTML = `
+            <strong>${site}</strong>
+            <div style="background:#eee;width:100%;height:18px;position:relative;border-radius:9px;overflow:hidden;">
+              <div style="background:linear-gradient(135deg, #4ade80, #22c55e);width:${pct}%;height:100%;transition:width 0.5s ease;"></div>
+              <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:13px;line-height:18px;color:#374151;font-weight:500;">${pct}%</span>
+            </div>`;
+          gaugeContainer.appendChild(bar);
         });
-        suitabilityCard.classList.remove('hidden');
+
+        document.getElementById('result').style.display = 'block';
+
+      } catch (err) {
+        alert(`요청 실패: ${err.message}`);
+        console.error('fetch 오류:', err);
+      } finally {
+        setAnalyzingState(false);
       }
-      
-      // Show results
-      analysisResult.classList.remove('hidden');
-    }
-    
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeIcons();
     });
+
+    function setAnalyzingState(analyzing) {
+      isAnalyzing = analyzing;
+      
+      if (analyzing) {
+        analyzeText.style.display = 'none';
+        analyzingText.style.display = 'flex';
+        analysisOverlay.style.display = 'flex';
+        analyzeBtn.disabled = true;
+      } else {
+        analyzeText.style.display = 'flex';
+        analyzingText.style.display = 'none';
+        analysisOverlay.style.display = 'none';
+        analyzeBtn.disabled = false;
+      }
+    }
   </script>
 </body>
 </html>
