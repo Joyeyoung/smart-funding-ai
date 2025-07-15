@@ -7,8 +7,6 @@ from PIL import Image, UnidentifiedImageError
 import numpy as np
 import io, os
 
-from transformers import MarianMTModel, MarianTokenizer
-
 app = FastAPI()
 
 # CORS 설정
@@ -99,18 +97,6 @@ def analyze_design(image_bytes):
         "material": guess_material(avg_color)
     }
 
-# 번역기 로딩 (Hugging Face)
-tokenizer = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-ko")
-model_translator = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-en-ko")
-
-def translate_to_korean(text):
-    try:
-        tokens = tokenizer.prepare_seq2seq_batch([text], return_tensors="pt")
-        translated = model_translator.generate(**tokens)
-        return tokenizer.decode(translated[0], skip_special_tokens=True)
-    except Exception as e:
-        return f"[번역 실패] {str(e)}"
-
 # 플랫폼 적합도 간이 추론
 def infer_suitability(label, design):
     color = design["main_color"]
@@ -156,17 +142,12 @@ async def recommend_platform(image: UploadFile = File(...)):
     else:
         platform, category, reason = "젝젝", "라이프스타일", f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다."
 
-    translated_reason = translate_to_korean(reason)
-
     return {
         "platform": platform,
         "category": category,
         "reason": reason,
-        "reason_ko": translated_reason,
         "feature": info["feature"],
         "label_ko": label_ko,
         "design": design_info,
         "suitability": suitability
     }
-
-# Cloud Run에서는 __main__ 필요 없음
