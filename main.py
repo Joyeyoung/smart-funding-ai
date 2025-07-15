@@ -7,13 +7,11 @@ from PIL import Image, UnidentifiedImageError
 import numpy as np
 import io, os
 
-# HuggingFace 번역기용
 from transformers import MarianMTModel, MarianTokenizer
 
-# FastAPI 앱 초기화
 app = FastAPI()
 
-# CORS 설정 (모든 출처 허용)
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,43 +20,42 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# 정적 파일 제공 (index.html 등)
+# 정적 파일 서빙
 app.mount("/static", StaticFiles(directory="."), name="static")
 
-# 루트 경로 처리
+# 루트 경로
 @app.get("/", include_in_schema=False)
 async def root():
     if os.path.exists("index.html"):
         return FileResponse("index.html", media_type="text/html")
     return JSONResponse({"message": "서비스 준비 완료"}, status_code=200)
 
-# 모델 로딩 (MobileNetV2 사용)
+# 모델 lazy-load
 model = None
 def get_model():
     global model
     if model is None:
         try:
-            print("📦 모델 로딩 중...")
+            print("📦 MobileNetV2 모델 로딩 중...")
             model = tf.keras.applications.MobileNetV2(weights="imagenet")
             print("✅ 모델 로딩 완료")
         except Exception as e:
-            print("❌ 모델 로딩 실패:", str(e))
-            raise RuntimeError("모델 로딩에 실패했습니다.")
+            raise RuntimeError(f"모델 로딩 실패: {str(e)}")
     return model
 
 decode_predictions = tf.keras.applications.mobilenet_v2.decode_predictions
 
-# 이미지 전처리 함수
+# 이미지 전처리
 def preprocess_image(image_bytes):
     try:
         img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     except UnidentifiedImageError:
-        raise HTTPException(status_code=400, detail="이미지 파일을 불러올 수 없습니다.")
+        raise HTTPException(status_code=400, detail="이미지를 불러올 수 없습니다.")
     img = img.resize((224, 224))
     arr = tf.keras.applications.mobilenet_v2.preprocess_input(np.array(img))
     return np.expand_dims(arr, axis=0)
 
-# 분류 라벨에 대한 한글 정보
+# 라벨 정보 및 번역 대응
 LABEL_INFO = {
     "coffee_mug": {"feature": "머그컵으로 일상에서 자주 사용하는 리빙 소품입니다.", "ko_name": "머그컵"},
     "cup": {"feature": "컵으로 다양한 음료를 담을 수 있는 실용적인 제품입니다.", "ko_name": "컵"},
@@ -67,11 +64,9 @@ LABEL_INFO = {
     "swimming_trunks": {"feature": "수영할 때 입는 남성용 수영복입니다.", "ko_name": "수영복(남성용)"}
 }
 
-# 라벨을 한글로 변환
 def label_to_korean(label):
     return LABEL_INFO.get(label, {}).get("ko_name", label.replace('_', ' '))
 
-# RGB 색상 → 색상 이름 추정
 def rgb_to_color_name(rgb):
     r, g, b = rgb
     if max(rgb) - min(rgb) < 20:
@@ -85,7 +80,6 @@ def rgb_to_color_name(rgb):
     if r > 200 and g > 100 and b > 100: return "베이지색"
     return "기타"
 
-# 색상 평균으로 재질 추정
 def guess_material(rgb):
     mean_val = np.mean(rgb)
     if mean_val > 200: return "플라스틱/세라믹"
@@ -94,7 +88,6 @@ def guess_material(rgb):
         return "천/패브릭"
     return "복합/기타"
 
-# 이미지 디자인 정보 분석 (색상, 재질)
 def analyze_design(image_bytes):
     try:
         img = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((100, 100))
@@ -106,20 +99,19 @@ def analyze_design(image_bytes):
         "material": guess_material(avg_color)
     }
 
-# HuggingFace 영어 → 한국어 번역기 초기화
+# 번역기 로딩 (Hugging Face)
 tokenizer = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-ko")
 model_translator = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-en-ko")
 
-# 텍스트 자동 번역 함수
 def translate_to_korean(text):
     try:
         tokens = tokenizer.prepare_seq2seq_batch([text], return_tensors="pt")
         translated = model_translator.generate(**tokens)
         return tokenizer.decode(translated[0], skip_special_tokens=True)
     except Exception as e:
-        return f"[번역 오류] {str(e)}"
+        return f"[번역 실패] {str(e)}"
 
-# 플랫폼 적합도 추정 함수 (간이 AI 룰 기반)
+# 플랫폼 적합도 간이 추론
 def infer_suitability(label, design):
     color = design["main_color"]
     material = design["material"]
@@ -132,7 +124,7 @@ def infer_suitability(label, design):
     else:
         score = {"와디즈": 60, "킥스타터": 60, "마쿠아게": 85, "젝젝": 90}
 
-    # 색상/재질 추가 가중치
+    # 색상/재질 영향 추가
     if color == "검은색" and material == "금속/고무":
         score = {k: min(v + 5, 100) for k, v in score.items()}
     elif color == "노란색" or material == "플라스틱/세라믹":
@@ -140,23 +132,23 @@ def infer_suitability(label, design):
 
     return score
 
-# 주요 API: 이미지 업로드 후 플랫폼 추천
+# API: 이미지 업로드 후 플랫폼 추천
 @app.post("/api/recommend-platform")
 async def recommend_platform(image: UploadFile = File(...)):
     try:
         image_bytes = await image.read()
         input_tensor = preprocess_image(image_bytes)
-        preds = get_model().predict(input_tensor)
+        model_local = get_model()
+        preds = model_local.predict(input_tensor)
         label = decode_predictions(preds, top=1)[0][0][1]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"예측 중 오류 발생: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"예측 실패: {str(e)}")
 
     label_ko = label_to_korean(label)
     info = LABEL_INFO.get(label, {"feature": f"{label_ko}(으)로 분류된 제품입니다."})
     design_info = analyze_design(image_bytes)
     suitability = infer_suitability(label, design_info)
 
-    # 플랫폼 추천 로직
     if "mug" in label or "cup" in label:
         platform, category, reason = "와디즈", "리빙 소품", "머그컵 등 리빙 제품은 국내 플랫폼에 적합합니다."
     elif "laptop" in label or "cellular" in label:
@@ -176,3 +168,5 @@ async def recommend_platform(image: UploadFile = File(...)):
         "design": design_info,
         "suitability": suitability
     }
+
+# Cloud Run에서는 __main__ 필요 없음
