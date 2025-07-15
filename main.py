@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import tensorflow as tf
 from PIL import Image, UnidentifiedImageError
@@ -22,15 +22,8 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# 정적 파일 제공 (index.html, favicon 등)
+# 정적 파일 제공 (index.html 등)
 app.mount("/static", StaticFiles(directory="."), name="static")
-
-# favicon.ico 요청 처리
-@app.get("/favicon.ico", include_in_schema=False)
-async def favicon():
-    if os.path.exists("favicon.ico"):
-        return FileResponse("favicon.ico", media_type="image/x-icon")
-    return Response(content="", media_type="image/x-icon")
 
 # 루트 경로 처리
 @app.get("/", include_in_schema=False)
@@ -45,9 +38,11 @@ def get_model():
     global model
     if model is None:
         try:
+            print("📦 모델 로딩 중...")
             model = tf.keras.applications.MobileNetV2(weights="imagenet")
+            print("✅ 모델 로딩 완료")
         except Exception as e:
-            print("모델 로딩 실패:", str(e))
+            print("❌ 모델 로딩 실패:", str(e))
             raise RuntimeError("모델 로딩에 실패했습니다.")
     return model
 
@@ -169,7 +164,6 @@ async def recommend_platform(image: UploadFile = File(...)):
     else:
         platform, category, reason = "젝젝", "라이프스타일", f"'{label_ko}' 관련 제품은 동남아 시장에 적합합니다."
 
-    # 영어로도 번역한 reason 포함
     translated_reason = translate_to_korean(reason)
 
     return {
@@ -182,5 +176,3 @@ async def recommend_platform(image: UploadFile = File(...)):
         "design": design_info,
         "suitability": suitability
     }
-
-# Cloud Run에서는 __main__ 실행 안 해도 됨
