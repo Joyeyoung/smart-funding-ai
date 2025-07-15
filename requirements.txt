@@ -5,5 +5,3 @@ tensorflow-cpu
 Pillow
 numpy
 python-multipart
-transformers
-torch
